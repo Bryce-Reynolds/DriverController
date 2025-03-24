@@ -1,46 +1,50 @@
 #include <Arduino.h>
 #include "pedal.h"
 
+// Constants for scaling
+const float ACC_BASELINE_SCALE = 0.9;
+const float PEDAL_VALUE_SCALE = 0.6;
 
-//DESC:     updates the pedal value in the drive object
-//INPUT:    pass by reference the drive object
-//OUT:      the pedal member of drive will be written to,
-//          the reversed member of drive will be read from
-void update_drive_pedal(){
-    
+// DESC:     updates the pedal value in the drive object
+// INPUT:    pass by reference the drive object
+// OUT:      the pedal member of drive will be written to,
+//           the reversed member of drive will be read from
+void update_drive_pedal() {
+    // Read raw values
     int baseRaw = analogRead(ACC_BASELINE);
     int pedalRaw = analogRead(ACC_PEDAL);
 
-    int max = analogRead(ACC_BASELINE) * 0.9;
+    // Calculate min and max thresholds
+    int max = baseRaw * ACC_BASELINE_SCALE;
     int min = ACC_PEDAL_MIN;
 
     float pedalValue = pedalRaw;
-    
-    // Checks for weird values and stops the motor
-    if ((analogRead(ACC_BASELINE) < (pedalValue - 50)) || (pedalRaw < min)) {
-      Serial.println("Error: PedalFault!");
-      drive.pedalFault = true;
-      return;
-    } 
+
+    // Check for invalid pedal values
+    if ((baseRaw < (pedalValue - 50)) || (pedalRaw < min)) {
+        Serial.println("Error: PedalFault!");
+        drive.pedalFault = true;
+        return;
+    }
     //Serial.println(pedalValue);   //DEBUG
 
-    //scale down to between 0 and 1
+    // Scale pedal value to range [0, 1]
     pedalValue -= min;
-    pedalValue /= max-min;
+    pedalValue /= (max - min);
 
+    // Debugging output
     Serial.print(pedalRaw);
     Serial.print(" | ");
     Serial.print(baseRaw);
     Serial.print(" | ");
-  
 
+    // Invert and constrain pedal value, then scale it
     pedalValue = 1 - pedalValue;
-    pedalValue = constrain(pedalValue, 0, 1) * 0.6;
+    pedalValue = constrain(pedalValue, 0, 1) * PEDAL_VALUE_SCALE;
 
     Serial.println(pedalValue);
 
-    //update pedal value
+    // Update pedal value in drive object
     drive.pedal = pedalValue;
-    return;
-};
+}
 

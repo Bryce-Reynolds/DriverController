@@ -30,9 +30,9 @@ void update_power_frame()
 
 void sendDriveMessage()
 {
-  if (!drive.pedalFault){
-    Can0.sendFrame(drive.driveFrame);
-  }
+    if (!drive.pedalFault){
+        Can0.sendFrame(drive.driveFrame);
+    }
 }
 
 void sendPowerMessage()
